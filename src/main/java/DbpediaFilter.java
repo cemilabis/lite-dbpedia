@@ -44,6 +44,12 @@ public class DbpediaFilter {
                 //Filter instance types and write to file
                 filterInstanceTypesAndWriteToFile(settings.getInstanceTypesFileLocation(),settings.getFilteredType(),writer,filteredResources);
 
+                //filter labels and write to new filtered file
+                filterLabelsAndWriteToFile(settings.getLabelsFileLocation(),writer,filteredResources);
+
+                //Filter properties and write to new filtered file
+                filterPropertiesAndWriteToFile(settings.getPropertyFileLocation(),writer,filteredResources);
+
                 //Close new file
                 writer.flush();
                 writer.close();
@@ -153,6 +159,44 @@ public class DbpediaFilter {
 
                         //add resource uri to the instance set
                         filteredInstances.add(escapeTagChars(partsOfLine[0]));
+                    }
+                }
+            }
+        }
+    }
+
+    private void filterLabelsAndWriteToFile(String labelsFile,Writer writer,Set<String> filteredInstances) throws IOException{
+        try (BufferedReader br = new BufferedReader(new FileReader(labelsFile))) {
+            String line = null;
+            while((line=br.readLine())!=null){
+                //Skip comment lines
+                if(!line.startsWith("#")) {
+                    //Each line is in form of subject predicate object
+                    String[] partsOfLine = line.split(" ");
+
+                    //We need to check type of subject. As this file only contains labels, it is sufficient to check first part
+                    if (filteredInstances.contains(escapeTagChars(partsOfLine[0]))) {
+                        //Write this line through writer
+                        writer.write(line+System.lineSeparator());
+                    }
+                }
+            }
+        }
+    }
+
+    private void filterPropertiesAndWriteToFile(String propertiesFile,Writer writer,Set<String> filteredInstances) throws IOException{
+        try (BufferedReader br = new BufferedReader(new FileReader(propertiesFile))) {
+            String line = null;
+            while((line=br.readLine())!=null){
+                //Skip comment lines
+                if(!line.startsWith("#")) {
+                    //Each line is in form of subject predicate object
+                    String[] partsOfLine = line.split(" ");
+
+                    //We need to check type of subject and object. If both of them are in filtered instance list, then we will append this line to new file
+                    if (filteredInstances.contains(escapeTagChars(partsOfLine[0])) && filteredInstances.contains(escapeTagChars(partsOfLine[2]))) {
+                        //Write this line through writer
+                        writer.write(line+System.lineSeparator());
                     }
                 }
             }
